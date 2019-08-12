@@ -10,8 +10,6 @@ public class ButtonInteract : MonoBehaviour
     Button buttonField;
     Text childTextField;
     public int refNum;
-    float t = 1;
-    Color color;
     private void Awake()
     {
         if(instance=null)
@@ -36,7 +34,6 @@ public class ButtonInteract : MonoBehaviour
     {
         if(UIManager.instance.ClonedGameObject==null)
         {
-            t = 1;
             GameObject obj = JsonLoaderScript.instance.SpawnGameobject(JsonLoaderScript.instance.scriptableData.ClonedObjects[refNum]);
             SetTransform(obj);
             UIManager.instance.CloseModelBtnView();
@@ -45,8 +42,6 @@ public class ButtonInteract : MonoBehaviour
             SetAnimation(obj);
             print(obj.name);
         }
-   
-        
     }
     public void OnClickEvent()
     {
@@ -70,42 +65,18 @@ public class ButtonInteract : MonoBehaviour
     {
         if(obj.name.StartsWith(Tags.chotta))
         {
-
             anim = obj.GetComponent<Animator>();
+            if(anim==null)
+            {
+                print("Please Redownload the Models. Animator is nor Assign to This Model");
+               // anim= obj.AddComponent<Animator>();
+            }
             RuntimeAnimatorController ChotabeamController = (RuntimeAnimatorController)Resources.Load("ChotabeamController", typeof(RuntimeAnimatorController));
             anim.runtimeAnimatorController = ChotabeamController;
-            anim.Play("Jump");
+            anim.Play(Tags.AnimJump);
             //print(ChotabeamController.name + " " + anim.gameObject.name);
         }
     }
 
-    Color ColorFade()
-    {
-        if (t > 0)
-        {
-            color = new Color(1, 1, 1, Mathf.Clamp(t, 0.8f, 1));
-            //print(color + " " + t);
-        }
-        else
-        {
-            color = new Color(1, 1, 1, 1);
-            t = 1;
-        }
-
-        return color;
-    }
-    private void Update()
-    {
-        //if (JsonLoaderScript.instance.isOpend && t>0)
-        //{
-        //    t -= Time.deltaTime;
-        //}
-           
-    }
-
-
-
-
-
-
+ 
 } // class

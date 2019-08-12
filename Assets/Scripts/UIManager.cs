@@ -11,6 +11,7 @@ public class Tags
     public static string Wolf_Body = "Wolf_Body";
     public static string MaterialPath = "Materials/Mat";
     public static string TexturesPath = "Textures/";
+    public static string AnimJump = "Jump";
 }
 public class UIManager : MonoBehaviour
 {
@@ -66,7 +67,7 @@ public class UIManager : MonoBehaviour
 
     public void OpenModellView()
     {
-        JsonLoaderScript.instance.isOpend = false;
+
         PanelModelBtns.SetActive(true);
         PanelCloseBtn.SetActive(false);
         if (ClonedGameObject)

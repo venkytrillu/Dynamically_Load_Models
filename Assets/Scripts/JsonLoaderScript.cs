@@ -31,10 +31,7 @@ public class JsonLoaderScript : MonoBehaviour
     public string url;
     public ScriptableData scriptableData;
     ModelList listofModels;
-    float animTime = 1;
-    [HideInInspector]
-    public bool isOpend, isCompleted;
-    int nameCount;
+    int downloadCount;
     public static JsonLoaderScript instance;
     string trimPath = "http://dm-dev.southeastasia.cloudapp.azure.com:8080/get_image/";
     public void Awake()
@@ -61,8 +58,26 @@ public class JsonLoaderScript : MonoBehaviour
     private void Start()
     {
         UIManager.instance.myResultBox.text = "";
+
+        CheckFolderPaths();
     }
 
+    void CheckFolderPaths()
+    {
+        if (!Directory.Exists(Application.dataPath + "/Resources/Textures/"))
+        {
+            CreateFolders(Application.dataPath + "/Resources/Textures/");
+        }
+        if (!Directory.Exists(Application.dataPath + "/Resources/Models/"))
+        {
+            CreateFolders(Application.dataPath + "/Resources/Models/");
+        }
+    }
+    void CreateFolders(string path)
+    {
+        var folder = Directory.CreateDirectory(path);
+        AssetDatabase.Refresh();
+    }
     public IEnumerator GetJsonValues(string _url)
     {
         float timeSent = Time.time;
@@ -93,6 +108,7 @@ public class JsonLoaderScript : MonoBehaviour
         {
             listofModels = new ModelList();
             JsonConvert.PopulateObject(jsonString, listofModels);
+            UIManager.instance.slider.maxValue = listofModels.model_list.Length;
             if (scriptableData.ClonedObjects.Length == 0 && 
                 scriptableData.ClonedNames.Length == 0 )
             {
@@ -106,7 +122,6 @@ public class JsonLoaderScript : MonoBehaviour
             } 
         }
     }
-
     public void ViewModels()
     {
         StartCoroutine(AssignRefOfGameObject(1f));
@@ -123,8 +138,7 @@ public class JsonLoaderScript : MonoBehaviour
         UIManager.instance.PanelDownloadModels.SetActive(false);
         UIManager.instance.PanelModelBtns.SetActive(true);
         
-    }
-      
+    }  
     IEnumerator GetModeles(string _url,Creature data)
     {
         string write_path =Path.Combine(Application.dataPath+ "/Resources/Models/",  GetExetention(data.model_file));
@@ -135,11 +149,11 @@ public class JsonLoaderScript : MonoBehaviour
             yield return www.SendWebRequest();
            if(www.downloadHandler.isDone)
             {
-                scriptableData.ClonedNames[nameCount] = GetName(GetExetention(data.model_file));
+                scriptableData.ClonedNames[downloadCount] = GetName(GetExetention(data.model_file));
                 AssetDatabase.Refresh();
                 AssetDatabase.ImportAsset(write_path);
-                nameCount++;
-                 // print("nameCount " + nameCount);
+                downloadCount++;
+                 // print("downloadCount " + downloadCount);
                 DownloadCompleted();
                 UIManager.instance.myResultBox.text += "Download Completed :" +GetName(GetExetention(data.model_file))+ "Model"+ "\n";
             }
@@ -154,7 +168,6 @@ public class JsonLoaderScript : MonoBehaviour
             print("isCompleted");
         }
     }
-
     IEnumerator GetTextures(string _url, Creature data)
     {
         string write_path = Path.Combine(Application.dataPath + "/Resources/Textures/", GetExetention(data.model_image));
@@ -188,9 +201,7 @@ public class JsonLoaderScript : MonoBehaviour
             }
         }
     }
-
-    
-   public void SetMaterial(GameObject obj)
+    public void SetMaterial(GameObject obj)
     {
         obj.name = obj.name.Replace("(Clone)", "");
         Material mat = (Material)Resources.Load(Tags.MaterialPath, typeof(Material));
@@ -198,31 +209,24 @@ public class JsonLoaderScript : MonoBehaviour
         if (obj.name.StartsWith(Tags.chotta))
         {
             Texture tex = (Texture)Resources.Load(Tags.TexturesPath + Tags.chotta, typeof(Texture));
-            obj.transform.GetComponentInChildren<Renderer>().material = mat;
             obj.transform.GetComponentInChildren<Renderer>().material.mainTexture = tex;
         }
       else  if (obj.name.StartsWith(Tags.house))
         {
             Texture tex = (Texture)Resources.Load(Tags.TexturesPath + Tags.house, typeof(Texture));
-            obj.transform.GetComponentInChildren<Renderer>().material = mat;
             obj.transform.GetComponentInChildren<Renderer>().material.mainTexture = tex;
         }
         else if (obj.name.StartsWith(Tags.Wolf_Body))
         {
             Texture tex = (Texture)Resources.Load(Tags.TexturesPath + Tags.Wolf_Body, typeof(Texture));
-            obj.transform.GetComponentInChildren<Renderer>().material = mat;
             obj.transform.GetComponentInChildren<Renderer>().material.mainTexture = tex;
         }
         else if (obj.name.StartsWith(Tags.iron))
         {
             Texture tex = (Texture)Resources.Load(Tags.TexturesPath + Tags.iron, typeof(Texture));
-            obj.transform.GetComponentInChildren<Renderer>().material = mat;
             obj.transform.GetComponentInChildren<Renderer>().material.mainTexture = tex;
-            isOpend = true;
         }
     }
-
-   
 
     GameObject GetGameObject(string name)
     {
@@ -263,7 +267,7 @@ public class JsonLoaderScript : MonoBehaviour
         }
         if (data.Contains(".jpg"))
         {
-            string exetension = data.Replace(".png", "");
+            string exetension = data.Replace(".jpg", "");
             return exetension;
         }
         return null;
@@ -271,8 +275,8 @@ public class JsonLoaderScript : MonoBehaviour
 
     void DownloadCompleted()
     {
-        UIManager.instance.SetSliderValue(nameCount);
-        if (nameCount== listofModels.model_list.Length)
+        UIManager.instance.SetSliderValue(downloadCount);
+        if (downloadCount== listofModels.model_list.Length)
         {
             UIManager.instance.buttonView.SetActive(true);
         }
