@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEditor;
 using System.IO;
 using System;
-using UnityEngine.UI;
 using Newtonsoft.Json;
 using UnityEngine.Networking;
 using System.Runtime.Serialization;
@@ -40,7 +39,6 @@ public class JsonLoaderScript : MonoBehaviour
         {
             instance = this;
         }
-
         try
         {
             if (Application.internetReachability != NetworkReachability.NotReachable)
@@ -60,6 +58,7 @@ public class JsonLoaderScript : MonoBehaviour
         UIManager.instance.myResultBox.text = "";
 
         CheckFolderPaths();
+
     }
 
     void CheckFolderPaths()
@@ -72,11 +71,25 @@ public class JsonLoaderScript : MonoBehaviour
         {
             CreateFolders(Application.dataPath + "/Resources/Models/");
         }
+       
     }
     void CreateFolders(string path)
     {
-        var folder = Directory.CreateDirectory(path);
+        DirectoryInfo dir = Directory.CreateDirectory(path);
         AssetDatabase.Refresh();
+    }
+
+    int CheckDirectoryFilesCount(string path)
+    {
+       DirectoryInfo dir = new DirectoryInfo(path);
+       FileInfo[] filesinfo = dir.GetFiles();// GetFiles(path).GetLength(scriptableData.numberOfFiles);
+       return filesinfo.Length-listofModels.model_list.Length;
+    }
+
+    void DeleteFilesFromDir(string path)
+    {
+        DirectoryInfo dir = new DirectoryInfo(path);
+        dir.Delete(true);
     }
     public IEnumerator GetJsonValues(string _url)
     {
@@ -109,18 +122,67 @@ public class JsonLoaderScript : MonoBehaviour
             listofModels = new ModelList();
             JsonConvert.PopulateObject(jsonString, listofModels);
             UIManager.instance.slider.maxValue = listofModels.model_list.Length;
-            if (scriptableData.ClonedObjects.Length == 0 && 
-                scriptableData.ClonedNames.Length == 0 )
+            if(CheckDirectoryFilesCount(Application.dataPath + "/Resources/Models/")!= 
+                listofModels.model_list.Length)
             {
+                scriptableData.numberOfFiles = CheckDirectoryFilesCount(Application.dataPath + "/Resources/Models/");
+            }
+            if (CheckDirectoryFilesCount(Application.dataPath + "/Resources/Textures/") !=
+                listofModels.model_list.Length)
+            {
+                scriptableData.numberOfFiles = CheckDirectoryFilesCount(Application.dataPath + "/Resources/Textures/");
+            }
+
+            print(listofModels.model_list.Length);
+            if (listofModels.model_list.Length > scriptableData.numberOfFiles || 
+                listofModels.model_list.Length < scriptableData.numberOfFiles)
+            {
+                ResetScriptableData();
+                DeleteFilesFromDir(Application.dataPath + "/Resources/Models/");
+                DeleteFilesFromDir(Application.dataPath + "/Resources/Textures/");
+                scriptableData.numberOfFiles = listofModels.model_list.Length;
                 scriptableData.ClonedObjects = new GameObject[listofModels.model_list.Length];
                 scriptableData.ClonedNames = new string[listofModels.model_list.Length];
+                //int i = 0;
+                foreach (var data in listofModels.model_list)
+                {
+                    /* // test for server caontains data
+                    if(i<=1)
+                    {
+                        scriptableData.ClonedObjects = new GameObject[2];
+                        scriptableData.ClonedNames = new string[2];
+                        UIManager.instance.slider.maxValue = 2;
+                        StartCoroutine(GetTextures(data.model_image, data));
+                        print("wait:"+ i);
+                        StartCoroutine(GetModeles(data.model_file, data));
+                    }
+                    i++;*/
+                    StartCoroutine(GetTextures(data.model_image, data));
+                    StartCoroutine(GetModeles(data.model_file, data));
+                }
             }
-            foreach (var data in listofModels.model_list)
+            else
             {
-                StartCoroutine(GetTextures(data.model_image,data));
-                StartCoroutine(GetModeles(data.model_file, data));
-            } 
+                UIManager.instance.AfterDownloadModels();
+                print("isCompleted");
+            }
+            
         }
+    }
+
+    string GetNameFromDir(string path,Creature data)
+    {
+        DirectoryInfo dir =new DirectoryInfo(path);
+        FileInfo[] filesinfo = dir.GetFiles(GetName(GetExetention(data.model_file)));
+        print(filesinfo[0].FullName);
+        return filesinfo[0].FullName;
+    }
+
+    void ResetScriptableData()
+    {
+        scriptableData.numberOfFiles = 0;
+        scriptableData.ClonedObjects = new GameObject[0];
+        scriptableData.ClonedNames = new string[0];
     }
     public void ViewModels()
     {
@@ -137,12 +199,11 @@ public class JsonLoaderScript : MonoBehaviour
         }
         UIManager.instance.PanelDownloadModels.SetActive(false);
         UIManager.instance.PanelModelBtns.SetActive(true);
-        
     }  
     IEnumerator GetModeles(string _url,Creature data)
     {
         string write_path =Path.Combine(Application.dataPath+ "/Resources/Models/",  GetExetention(data.model_file));
-        if(!File.Exists(write_path))
+        if(!File.Exists(write_path)|| File.Exists(write_path))
         {
             UnityWebRequest www = new UnityWebRequest(_url, UnityWebRequest.kHttpVerbGET);
             www.downloadHandler = new DownloadHandlerFile(write_path,false);
@@ -150,13 +211,10 @@ public class JsonLoaderScript : MonoBehaviour
            if(www.downloadHandler.isDone)
             {
                 scriptableData.ClonedNames[downloadCount] = GetName(GetExetention(data.model_file));
-                if (downloadCount == 3)
-                {
-                    AssetDatabase.Refresh();
-                    AssetDatabase.ImportAsset(write_path);
-                }
+                AssetDatabase.Refresh();
+                AssetDatabase.ImportAsset(write_path);
                 downloadCount++;
-                 // print("downloadCount " + downloadCount);
+                // print("downloadCount " + downloadCount);
                 DownloadCompleted();
                 UIManager.instance.myResultBox.text += "Download Completed :" +GetName(GetExetention(data.model_file))+ "Model"+ "\n";
             }
@@ -167,8 +225,8 @@ public class JsonLoaderScript : MonoBehaviour
         }
         else
         {
-            UIManager.instance.AfterDownloadModels();
-            print("isCompleted");
+            //UIManager.instance.AfterDownloadModels();
+            //print("isCompleted");
         }
     }
     IEnumerator GetTextures(string _url, Creature data)
@@ -177,7 +235,7 @@ public class JsonLoaderScript : MonoBehaviour
         if (!File.Exists(write_path))
         {
             UnityWebRequest www = new UnityWebRequest(_url, UnityWebRequest.kHttpVerbGET);
-            if (GetSpriteName(GetExetention(data.model_image)).Contains("01.jpg"))
+            if (GetSpriteName(GetExetention(data.model_image)).Contains("01"))
             {
                 write_path = Path.Combine(Application.dataPath + "/Resources/Textures/", "house.jpg");
                 www.downloadHandler = new DownloadHandlerFile(write_path, false);
@@ -204,31 +262,46 @@ public class JsonLoaderScript : MonoBehaviour
             }
         }
     }
-    public void SetMaterial(GameObject obj)
+    public void SetMaterial(GameObject obj,string path)
     {
-        obj.name = obj.name.Replace("(Clone)", "");
         Material mat = (Material)Resources.Load(Tags.MaterialPath, typeof(Material));
+        obj.transform.GetComponentInChildren<Renderer>().material = mat;
         obj.transform.GetComponentInChildren<Renderer>().material.enableInstancing = true;
+        /*
+        //if textures name in server same as models names
+        if (obj.name.Contains(path))
+        {
+            Texture tex = (Texture)Resources.Load(Tags.TexturesPath + path, typeof(Texture));
+            obj.transform.GetComponentInChildren<Renderer>().material.mainTexture = tex;
+        }
+        */
         if (obj.name.StartsWith(Tags.chotta))
         {
             Texture tex = (Texture)Resources.Load(Tags.TexturesPath + Tags.chotta, typeof(Texture));
             obj.transform.GetComponentInChildren<Renderer>().material.mainTexture = tex;
         }
-      else  if (obj.name.StartsWith(Tags.house))
+        else if (obj.name.StartsWith(Tags.house))
         {
             Texture tex = (Texture)Resources.Load(Tags.TexturesPath + Tags.house, typeof(Texture));
             obj.transform.GetComponentInChildren<Renderer>().material.mainTexture = tex;
         }
-        else if (obj.name.StartsWith(Tags.Wolf_Body))
+        else if (obj.name.StartsWith(Tags.Wolf))
         {
             Texture tex = (Texture)Resources.Load(Tags.TexturesPath + Tags.Wolf_Body, typeof(Texture));
             obj.transform.GetComponentInChildren<Renderer>().material.mainTexture = tex;
+            print("hiiii");
         }
         else if (obj.name.StartsWith(Tags.iron))
         {
             Texture tex = (Texture)Resources.Load(Tags.TexturesPath + Tags.iron, typeof(Texture));
             obj.transform.GetComponentInChildren<Renderer>().material.mainTexture = tex;
         }
+        else if (obj.name.StartsWith(Tags.Tyre))
+        {
+            Texture tex = (Texture)Resources.Load(Tags.TexturesPath + Tags.Tyre_texture, typeof(Texture));
+            obj.transform.GetComponentInChildren<Renderer>().material.mainTexture = tex;
+        }
+        
     }
 
     GameObject GetGameObject(string name)
@@ -279,7 +352,7 @@ public class JsonLoaderScript : MonoBehaviour
     void DownloadCompleted()
     {
         UIManager.instance.SetSliderValue(downloadCount);
-        if (downloadCount== listofModels.model_list.Length)
+        if (downloadCount== scriptableData.ClonedNames.Length)
         {
             UIManager.instance.buttonView.SetActive(true);
         }

@@ -38,7 +38,8 @@ public class ButtonInteract : MonoBehaviour
             SetTransform(obj);
             UIManager.instance.CloseModelBtnView();
             UIManager.instance.ClonedGameObject = obj;
-            JsonLoaderScript.instance.SetMaterial(obj);
+            obj.name = obj.name.Replace("(Clone)", "");
+            JsonLoaderScript.instance.SetMaterial(obj, obj.name);
             SetAnimation(obj);
             print(obj.name);
         }
@@ -63,7 +64,7 @@ public class ButtonInteract : MonoBehaviour
 
     void SetAnimation(GameObject obj)
     {
-        if(obj.name.StartsWith(Tags.chotta))
+        if(obj.name.Contains(Tags.chotta))
         {
             anim = obj.GetComponent<Animator>();
             if(anim==null)

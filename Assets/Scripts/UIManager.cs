@@ -9,8 +9,11 @@ public class Tags
     public static string chotta = "chotta";
     public static string iron = "iron";
     public static string Wolf_Body = "Wolf_Body";
+    public static string Wolf = "Wolf";
     public static string MaterialPath = "Materials/Mat";
     public static string TexturesPath = "Textures/";
+    public static string Tyre_texture = "tyre_texture";
+    public static string Tyre= "tyre";
     public static string AnimJump = "Jump";
 }
 public class UIManager : MonoBehaviour

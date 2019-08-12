@@ -8,5 +8,6 @@ public class ScriptableData : ScriptableObject
 {
     public string[] ClonedNames;
     public GameObject[] ClonedObjects;
+    public int numberOfFiles;
 
 } // class

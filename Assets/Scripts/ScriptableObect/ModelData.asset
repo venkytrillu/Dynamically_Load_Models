@@ -13,12 +13,15 @@ MonoBehaviour:
   m_Name: ModelData
   m_EditorClassIdentifier: 
   ClonedNames:
-  - Wolf_one
-  - chotta_beam
-  - house
-  - iron_man
+  - 
+  - 
+  - 
+  - 
+  - 
   ClonedObjects:
-  - {fileID: -927199367670048503, guid: b57e2407aefae4c42a90fc6c95b14b89, type: 3}
-  - {fileID: -927199367670048503, guid: d406d1da4fd663945bf4ef2d872a1352, type: 3}
-  - {fileID: -927199367670048503, guid: 958055b9eb74091428087cb4e1dabd62, type: 3}
-  - {fileID: -927199367670048503, guid: 071b5b0678f7dca4db5c7793ff3e6ce5, type: 3}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  numberOfFiles: 5
