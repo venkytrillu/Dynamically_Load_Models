@@ -150,8 +150,11 @@ public class JsonLoaderScript : MonoBehaviour
            if(www.downloadHandler.isDone)
             {
                 scriptableData.ClonedNames[downloadCount] = GetName(GetExetention(data.model_file));
-                AssetDatabase.Refresh();
-                AssetDatabase.ImportAsset(write_path);
+                if (downloadCount == 3)
+                {
+                    AssetDatabase.Refresh();
+                    AssetDatabase.ImportAsset(write_path);
+                }
                 downloadCount++;
                  // print("downloadCount " + downloadCount);
                 DownloadCompleted();
